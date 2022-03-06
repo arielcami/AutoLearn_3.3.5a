@@ -6,12 +6,12 @@
 	Este script no solo va enseñando habilidades, sino que completa las CADENAS DE MISIONES importantes 
 	que necesitan clases como el Druida para su forma de oso, el Brujo para sus demonios y 
 	el Cazador para poder domesticar una bestia. De esta manera, dichas misiones quedan registradas en el server
-	y no sucede como pasa con otros scritps que solo enseñan el hechizo 
-	y dejan la misión para que el jugador las haga y aprenda el mismo hechizo otra vez.
+	y no sucede como pasa con otros scripts que solo enseñan el hechizo 
+	y dejan las misiones para que el jugador las haga y aprenda el mismo hechizo otra vez.
 
 	Si se usa en servidores con experiencia alta, puede que se obvien habilidades, 
 	como ejemplo, si un jugador entrega una misión que le sube del nivel 13 al 15,
-	las habilidades que correspondan al nivel 14 NO SE APRENDERÁN. 
+	las habilidades del nivel 14 NO SE APRENDERÁN. 
 
 	Este script añade automáticamente los hechizos que enseña el entrenador, de acuerdo al nivel del jugador.
 	El jugador debe acercarse a su entrenador para aprender nuevos rangos de los hechizos
