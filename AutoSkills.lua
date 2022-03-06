@@ -107,7 +107,7 @@ local SKILLS, MISIONES_4, MISIONES_10, MISIONES_12, MISIONES_20, MISIONES_30, PO
 	{47793,47856,47884},{47813,47855},{47857,47860,47865,47888,47891,47823},{47864,47893,47878,47809,47815,47820},
 	{47867,47836,57946,47889,48018,48020,60220,58887,47825,47838,47811,61290}},
 [1024] = {--Druida
-	{},{},{},{8921,774},{},{5177,467},{},{339,5186},{},{8924,16689,5232,1058,99,18960},{},{8936,50769,5229},{},{5178,5211,782,5187,8946},{},{779,1430,8925,783,1066},{},
+	{},{},{},{8921,774},{},{5177,467},{},{339,5186},{},{8924,16689,5232,1058,99,18960},{},{8936,50769,5229},{},{5178,5211,782,5187},{},{779,1430,8925,783,1066},{},
 	{16857,8938,6808,770,2637,1062,16810},{},{768,1735,2912,6756,5188,5215,1079,1082,20484},{},{5221,2908,5179,8926,2090},{},{1822,780,5217,1075,2782,8939,50768},
 	{},{1850,6809,8949,2893,5189},{},{8998,9492,5209,3029,8927,5195,2091,16811},{},{6798,6800,5180,5234,8940,740,20739},{},{6785,22568,5225,9490,6778},{},
 	{8928,8950,8914,8972,769,1823,3627},{},{9005,9493,6793,22842,8941,50767},{},{8992,5201,8955,6780,18657,5196,8903,16812},{},
@@ -153,9 +153,13 @@ local SKILLS, MISIONES_4, MISIONES_10, MISIONES_12, MISIONES_20, MISIONES_30, PO
 	[16] = {1473,1471},
 	[64] = {1715,1688,1689},
 	[512] = {9529,9619}},
-[1024]= {-- Misiones de Druida - Forma de Oso - Nivel 10
+[1024]= {-- Misiones de Druida - Forma de Oso - Nivel 10 y Curar envenenamiento - Nivel 14
 	[8] = {5923,5921,5929,5931,6001},
-	[32] = {5922,5930,5932,6002}}},
+	[32] = {5922,5930,5932,6002},
+	[14] = {
+		[8] = {6121,6122,6123,6124,6125},
+		[32] = {6126,6127,6128,6129,6130}} 
+	}}, 
 {[2] = {-- Misiones de Paladín - Redención - Nivel 12
 	[1] = {1642,1643,1644,1780,1781,1786,1787,1788},
 	[4] = {3000,1646,1647,1648,1778,1779,1783,1784,1785},
@@ -219,7 +223,7 @@ local Bersk,Reden,sucu,abis = '|cff6ddbf9[Actitud rabiosa]|cfff2b141.','|cff6ddb
 local tier,fueg,agua = '|cff6ddbf9[Tótem de tierra]|cfff2b141.','|cff6ddbf9[Tótem de fuego]|cfff2b141.','|cff6ddbf9[Tótem de agua]|cfff2b141.'
 local aire = '|cfff2b141Recibes |cffffffff[Tótem del Anillo de la Tierra]|cfff2b141 por haber completado todas las misiones y tener los 4 Tótems.'
 local mana,oso = '|cff6ddbf9[Invocar manáfago]|cfff2b141.','|cff6ddbf9[Forma de oso]|cfff2b141.'
-local caz1 = '|cff6ddbf9[Domesticar bestia]|cfff2b141.'
+local caz1,veneno = '|cff6ddbf9[Domesticar bestia]|cfff2b141.','|cff6ddbf9[Curar envenenamiento]|cfff2b141.'
 -------------------------------------------------------------------------------------------------------------------------------------------
 	function QUEST(Q) P:AddQuest(Q) P:CompleteQuest(Q) P:RewardQuest(Q)	end -- Método para completar misiones por ID.
 -------------------------------------------------------------------------------------------------------------------------------------------
@@ -242,6 +246,7 @@ local caz1 = '|cff6ddbf9[Domesticar bestia]|cfff2b141.'
 	elseif bruj and L==10 then for i=1, #MISIONES_10[C][R] do QUEST(MISIONES_10[C][R][i]) end
 	elseif drui and L==10 then P:SendAreaTriggerMessage(Complet..oso) for i=1, #MISIONES_10[C][R] do QUEST(MISIONES_10[C][R][i]) end
 	elseif pala and L==12 then for i=1, #MISIONES_12[C][R] do QUEST(MISIONES_12[C][R][i]) end
+	elseif drui and L==14 then for i=1, #MISIONES_10[C][L][R] do QUEST(MISIONES_10[C][L][R][i]) end
 	elseif mago and L==20 then for i=1, #PORT_MAGO_20[R]  do PORTALES(PORT_MAGO_20[R][i]) end
 	elseif cham and L==20 then for i=1, #MISIONES_20[C][R] do QUEST(MISIONES_20[C][R][i]) end
 	elseif bruj and L==20 then for i=1, #MISIONES_20[C][R] do QUEST(MISIONES_20[C][R][i]) end
@@ -253,6 +258,7 @@ local caz1 = '|cff6ddbf9[Domesticar bestia]|cfff2b141.'
 ----Comentarios y varios items residuales de quest-----------------------------------------------------------------------------------------
 		if guer and L==10 then P:SendAreaTriggerMessage(Complet..Def)		 
 	elseif guer and L==30 then P:SendAreaTriggerMessage(Complet..Bersk)
+	elseif drui and L==14 then P:SendAreaTriggerMessage(Complet..veneno) D(15844) D(15826) D(15866) D(15842)
 	elseif caza and L==10 then P:SendAreaTriggerMessage(Complet..caz1) D(24136) D(24138)
 	elseif pala and L==12 then P:SendAreaTriggerMessage(Complet..Reden) D(6866) D(24157) D(24184)
 	elseif cham and L== 4 then P:SendAreaTriggerMessage(Complet..tier) D(6635)
