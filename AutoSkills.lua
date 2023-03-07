@@ -1,30 +1,37 @@
---[[
-	Ariel Camilo // ariel.cami@gmail.com // 4 de Marzo 2022.
+--[[	Ariel Camilo - 6 de Marzo 2023
 
-	Este script esta diseñado para trabajar con servidores 3.3.5a de rates bajos, preferiblemente 1x.
+	ESPECIFICACIONES:
+		* Va enseñando las habilidades a medida que se sube de nivel.
+		* Va realizando las cadenas de misiones esenciales para las clases. Ej: Los tótems del chamán o Domesticar bestia del Cazador.
+		* No importa si el jugador pasa del nivel 1 al 80, igual se enseñarán las habilidades de los niveles de en medio, (misiones no).
+		* Cada vez que se enseña una habilidad, el Script comprueba que el jugador no la tenga, para no sobreescribir.
+		* Cada vez que se realiza una misión, el Script comprueba que el jugador no la haya hecho ya, para no sobreescribir.
+	
+	SITUACIONES QUE PUEDEN HACER QUE NO FUNCIONE BIEN:
+		* Si el servidor es de muy altos rates.
+			Ejemplo: 
+				Te creas un Chamán y al completar la primera misión, te sube al nivel 15.
+				El Script va a enseñarte todas las habilidades disponibles hasta el nivel 15, 
+				Pero no va a realizar las misiones de nivel 4 (Tótem de tierra) y nivel 10 (Tótem de fuego).
+				
+			Para que las misiones se puedan realizar sin problemas se deben cumplir dos cosas.
+				1. Que el Script este activado: Script_ON = true
+				2. Que al alcanzar el nivel requerido para obtener las misiones, el jugador haya subido solo 1 nivel.
+				Ejemplo:
+					Estás jugando un Paladín nivel 11, y al subir al nivel 12, se completarán automáticamente
+					las misiones para la habilidad Redención.
+					ESTO NO OCURRIRÁ SI SUBES DEL 11 AL 13 DE GOLPE, O A UN NIVEL MAYOR AL 12 EN GENERAL.
 
-	Este script no solo va enseñando habilidades, sino que completa las CADENAS DE MISIONES importantes 
-	que necesitan clases como el Druida para su forma de oso, el Brujo para sus demonios y 
-	el Cazador para poder domesticar una bestia. De esta manera, dichas misiones quedan registradas en el server
-	y no sucede como pasa con otros scripts que solo enseñan el hechizo 
-	y dejan las misiones para que el jugador las haga y aprenda el mismo hechizo otra vez.
+		* Si un GM, usando comandos, te baja el nivel para que se te completen las misiones.
+			El Script solo funcionará cuando los niveles van cambiando de manera ascendente y de 1 en 1.
 
-	Si se usa en servidores con experiencia alta, puede que se obvien habilidades, 
-	como ejemplo, si un jugador entrega una misión que le sube del nivel 13 al 15,
-	las habilidades del nivel 14 NO SE APRENDERÁN. 
-
-	Este script añade automáticamente los hechizos que enseña el entrenador, de acuerdo al nivel del jugador.
-	El jugador debe acercarse a su entrenador para aprender nuevos rangos de los hechizos
-	obtenidos a través de los talentos.
-
-	Este script funciona perfectamente para servidores donde hay leveleo del 1 al 80. 
-	Si se emplea este script en un servidor donde se empiece por ejemplo nivel 60, las habilidades 
-	de niveles anteriores se deben entrenar manualmente en el entrenador. 
-
-	PD: Fueron muchos días de arduo trabajo y testeo, te agradecería muchísimo una estrellita y un follow. Gracias!
+		* Tener el inventario lleno. Ej: El Chamán recibe sus tótems como ítems, si tiene el inventario lleno, no podrá recibirlos. 
+			Las misiones que dan los tótems no se completarán, y el jugador deberá realizarlas por su cuenta.
 ]]
 
-local SKILLS, MISIONES_4, MISIONES_10, MISIONES_12, MISIONES_20, MISIONES_30, PORT_MAGO_20, PORT_MAGO_40 = {--> Skills. Estructura: Clase > Id de Skills
+Script_ON = true   --> Coloca false para desactivar el Script
+
+local SPELL = {--> Contiene las IDs de las habilidades. Estructura: Clase > Nivel > IDs
 [1] = {--Guerrero
 	{},{},{},{100,772},{},{3127,6343,34428},{},{284,1715},{},{6546,2687},{},{7384,5242,72},{},{1160,6572},{},{694,285,2565},{},{8198,676},{},
 	{6547,20230,845,12678,674},{},{6192,5246},{},{1608,5308,6190,6574},{},{6178,1161},{},{8204,871},{},{6548,1464,20252,7369},{},{11564,20658,11549,18499},
@@ -118,14 +125,17 @@ local SKILLS, MISIONES_4, MISIONES_10, MISIONES_12, MISIONES_20, MISIONES_30, PO
 	{33357,26980},{27006,27005,33745},{27008,26996,27000,26986},{26989,27009},{27004,26985,26982,26994,50764,26979},{27002,26995,33786,26988,27012,26991,26990,26983},
 	{49799,62078,50212,48559,48442},{48573,48561,48576,48464,48450},{48578,48567,48479,48569},{49802,48459,53307,48377},{52610,48571,48462,48440,48446},{48575},
 	{49803,48562,48560,48443},{48574,48577,48465,53308,53312},{48579,50213,48480,48570,48461,48477,48378},
-	{49800,48568,48572,48463,48467,48470,48451,48469,50464,48441,50763,48447}}},
---> Misiones. Estructura: Clase > Raza > Id de Misión.
-{[64] = {--Misiones de Chamán - Tótem de Tierra - Nivel 4
-	[2] = 	{1516,1517,1518},
-	[32] = 	{1519,1520,1521},
+	{49800,48568,48572,48463,48467,48470,48451,48469,50464,48441,50763,48447}}}
+
+local Quest_04 = {--Misiones de Chamán - Tótem de tierra - Nivel 4
+[64]={
+	[2] = {1516,1517,1518},
+	[32] = {1519,1520,1521},
 	[128] = {1516,1517,1518},
-	[1024] ={9449,9450,9451}}},
-{[1] = {--Misiones de Guerrero, - Actitud defensiva - Nivel 10
+	[1024] = {9449,9450,9451}}}
+
+local Quest_10 = {
+[1] = {--Misiones de Guerrero - Actitud defensiva - Nivel 10
 	[1] = {1638,1639,1640,1665},
 	[2] = {1505,1498},
 	[4] = {1638,1639,1640,1665},
@@ -144,10 +154,10 @@ local SKILLS, MISIONES_4, MISIONES_10, MISIONES_12, MISIONES_20, MISIONES_30, PO
 	[512] = {9484,9486,9485,9673},
 	[1024] = {9757,9591,9592,9593,9675}},
 [64] = {--Misiones de Chamán - Tótem de fuego - Nivel 10
-	[2] = 	{1524,1525,1526,1527},
-	[32] = 	{2958,1524,1525,1526,1527},
+	[2] = {1524,1525,1526,1527},
+	[32] = {2958,1524,1525,1526,1527},
 	[128] = {1524,1525,1526,1527},
-	[1024] ={9464,9465,9467,9468,9461,9555}},
+	[1024] = {9464,9465,9467,9468,9461,9555}},
 [256]= {--Misiones de Brujo - Abisario - Nivel 10
 	[1] = {1685,1688,1689},
 	[2] = {1501,1504},
@@ -159,14 +169,17 @@ local SKILLS, MISIONES_4, MISIONES_10, MISIONES_12, MISIONES_20, MISIONES_30, PO
 	[32] = {5922,5930,5932,6002},
 	[14] = {
 		[8] = {6121,6122,6123,6124,6125},
-		[32] = {6126,6127,6128,6129,6130}} 
-	}}, 
-{[2] = {-- Misiones de Paladín - Redención - Nivel 12
+		[32] = {6126,6127,6128,6129,6130}}}}
+
+local Quest_12 = {
+[2] = {-- Misiones de Paladín - Redención - Nivel 12
 	[1] = {1642,1643,1644,1780,1781,1786,1787,1788},
 	[4] = {3000,1646,1647,1648,1778,1779,1783,1784,1785},
 	[512] = {9677,9678,9681,9684,9685},
-	[1024] = {9598,9600}}},
-{[64] = {-- Misiones de Chamán - Tótem de agua - Nivel 20
+	[1024] = {9598,9600}}}
+
+local Quest_20 = {
+[64] = {-- Misiones de Chamán - Tótem de agua - Nivel 20
 	[2] = {1528,1530,1535,1536,1534,220,63,100,96},
 	[32] = {1529,1530,1535,1536,1534,220,63,100,96},
 	[128] = {1528,1530,1535,1536,1534,220,63,100,96},
@@ -176,8 +189,10 @@ local SKILLS, MISIONES_4, MISIONES_10, MISIONES_12, MISIONES_20, MISIONES_30, PO
 	[2] = {1507,1508,1509,1510,1511,1515,1512,1513},
 	[16] = {1472,1476,1474},
 	[64] = {1717,1716,1738,1739},
-	[512] = {10605,1472,1476,1474}}},
-{[1] = {--Misiones de Guerrero, - Actitud rabiosa - Nivel 30
+	[512] = {10605,1472,1476,1474}}}
+
+local Quest_30 = {
+[1] = {--Misiones de Guerrero, - Actitud rabiosa - Nivel 30
 	[1] = {1718,1719},
 	[2] = {1718,1719},
 	[4] = {1718,1719},
@@ -198,90 +213,178 @@ local SKILLS, MISIONES_4, MISIONES_10, MISIONES_12, MISIONES_20, MISIONES_30, PO
 	[2] = {2996,1801,1803,1805,1795},
 	[16] = {3001,1801,1803,1805,1795},
 	[64] = {1798,1758,1802,1804,1795},
-	[512] = {3001,1801,1803,1805,1795}}},
---> Teletransportes y Portales. Estructura: Clase > Id de Skill
-{[1] = {3561,3565,32271,3562}, --Teletransportes del Mago - Nivel 20
-	[16] = {3567,32272,3566,3563},
-	[64] = {3561,3565,32271,3562},
-	[128] = {3567,32272,3566,3563},
-	[512] = {3567,32272,3566,3563},
-	[1024] = {3561,3565,32271,3562}},
+	[512] = {3001,1801,1803,1805,1795}}}
+
+local Port20, Port40 = {
+[1] = {3561,3565,32271,3562}, --Teletransportes del Mago - Nivel 20
+[16] = {3567,32272,3566,3563},
+[64] = {3561,3565,32271,3562},
+[128] = {3567,32272,3566,3563},
+[512] = {3567,32272,3566,3563},
+[1024] = {3561,3565,32271,3562}},
 {[1] = {10059, 11419, 32266, 11416}, --Portales del Mago - Nivel 40
-	[16] = {11417,32267,11420,11418},
-	[64] = {10059, 11419, 32266, 11416},
-	[128] = {11417,32267,11420,11418},
-	[512] = {11417,32267,11420,11418},
-	[1024] = {10059,11419,32266,11416}}
+[16] = {11417,32267,11420,11418},
+[64] = {10059, 11419, 32266, 11416},
+[128] = {11417,32267,11420,11418},
+[512] = {11417,32267,11420,11418},
+[1024] = {10059,11419,32266,11416}}
 
-local function CambioDeNivel(evento, P, N)
-local L, R, C, A, H, money = P:GetLevel(), P:GetRaceMask(), P:GetClassMask(), P:IsAlliance(), P:IsHorde(), P:GetCoinage()
-local humano,orco,enano,elfo_a,nomuerto,tauren,gnomo,trol,elfo_h,draenei = (R==1),(R==2),(R==4),(R==8),(R==16),(R==32),(R==64),(R==128),(R==512),(R==1024)
-local guer,pala,caza,pica,sace,dk,cham,mago,bruj,drui = (C==1),(C==2),(C==4),(C==8),(C==16),(C==32),(C==64),(C==128),(C==256),(C==1024)
-local L20,L40,L60,L70,L77 = (L==20),(L==40),(L==60),(L==70),(L==77)
-local RepH,RepA = P:GetReputation(76), P:GetReputation(72)
-local Compl,Complet,Def = '|cfff2b141Has completado la misión de ','|cfff2b141Has completado la cadena de misiones para ','|cff6ddbf9[Actitud devensiva]|cfff2b141.'
-local Bersk,Reden,sucu,abis = '|cff6ddbf9[Actitud rabiosa]|cfff2b141.','|cff6ddbf9[Redención]|cfff2b141.','|cff6ddbf9[Invocar súcubo]|cfff2b141.','|cff6ddbf9[Invocar abisario]|cfff2b141.'
-local tier,fueg,agua = '|cff6ddbf9[Tótem de tierra]|cfff2b141.','|cff6ddbf9[Tótem de fuego]|cfff2b141.','|cff6ddbf9[Tótem de agua]|cfff2b141.'
-local aire = '|cfff2b141Recibes |cffffffff[Tótem del Anillo de la Tierra]|cfff2b141 por haber completado todas las misiones y tener los 4 Tótems.'
-local mana,oso = '|cff6ddbf9[Invocar manáfago]|cfff2b141.','|cff6ddbf9[Forma de oso]|cfff2b141.'
-local caz1,veneno = '|cff6ddbf9[Domesticar bestia]|cfff2b141.','|cff6ddbf9[Curar envenenamiento]|cfff2b141.'
--------------------------------------------------------------------------------------------------------------------------------------------
-	function QUEST(Q) P:AddQuest(Q) P:CompleteQuest(Q) P:RewardQuest(Q)	end -- Método para completar misiones por ID.
--------------------------------------------------------------------------------------------------------------------------------------------
-	function AUTOSKILL_(clase, nivel) 
-	for i = 1, #SKILLS[clase][nivel] do P:LearnSpell(SKILLS[clase][nivel][i]) end end -- Bucle lector de tabla SKILLS.
--------------------------------------------------------------------------------------------------------------------------------------------
-	function PORTALES(p) P:LearnSpell(p) end    function D(id) P:RemoveItem(id,1) end                   AUTOSKILL_(C,L)  -- Bucle principal
--------------------------------------------------------------------------------------------------------------------------------------------
--- Skills Específicas de Bando.
-	if pala and L==66 and H then P:LearnSpell(53736) end
-	if pala and L==64 and A then P:LearnSpell(31801) end
-	if mago and L==60 then if H then P:LearnSpell(tel_shat_H) else P:LearnSpell(tel_shat_A) end end
-	if mago and L==65 then if H then P:LearnSpell(por_shat_H) else P:LearnSpell(por_shat_A) end end
-	if cham and L==70 then if H then P:LearnSpell(2825) else P:LearnSpell(32182) end end
-----Gestor de misiones y Teletransportes del Mago------------------------------------------------------------------------------------------
-		if cham and L== 4 then for i=1,  #MISIONES_4[C][R] do QUEST( MISIONES_4[C][R][i]) end
-	elseif cham and L==10 then for i=1, #MISIONES_10[C][R] do QUEST(MISIONES_10[C][R][i]) end
-	elseif guer and L==10 then for i=1, #MISIONES_10[C][R] do QUEST(MISIONES_10[C][R][i]) end	
-	elseif caza and L==10 then for i=1, #MISIONES_10[C][R] do QUEST(MISIONES_10[C][R][i]) end
-	elseif bruj and L==10 then for i=1, #MISIONES_10[C][R] do QUEST(MISIONES_10[C][R][i]) end
-	elseif drui and L==10 then P:SendAreaTriggerMessage(Complet..oso) for i=1, #MISIONES_10[C][R] do QUEST(MISIONES_10[C][R][i]) end
-	elseif pala and L==12 then for i=1, #MISIONES_12[C][R] do QUEST(MISIONES_12[C][R][i]) end
-	elseif drui and L==14 then for i=1, #MISIONES_10[C][L][R] do QUEST(MISIONES_10[C][L][R][i]) end
-	elseif mago and L==20 then for i=1, #PORT_MAGO_20[R]  do PORTALES(PORT_MAGO_20[R][i]) end
-	elseif cham and L==20 then for i=1, #MISIONES_20[C][R] do QUEST(MISIONES_20[C][R][i]) end
-	elseif bruj and L==20 then for i=1, #MISIONES_20[C][R] do QUEST(MISIONES_20[C][R][i]) end
-	elseif guer and L==30 then for i=1, #MISIONES_30[C][R] do QUEST(MISIONES_30[C][R][i]) end
-	elseif cham and L==30 then for i=1, #MISIONES_30[C][R] do QUEST(MISIONES_30[C][R][i]) end
-	elseif bruj and L==30 then for i=1, #MISIONES_30[C][R] do QUEST(MISIONES_30[C][R][i]) end
-	elseif mago and L==40 then for i=1, #PORT_MAGO_40[R]  do PORTALES(PORT_MAGO_40[R][i]) end
-	end
-----Comentarios y varios items residuales de quest-----------------------------------------------------------------------------------------
-		if guer and L==10 then P:SendAreaTriggerMessage(Complet..Def)		 
-	elseif guer and L==30 then P:SendAreaTriggerMessage(Complet..Bersk)
-	elseif drui and L==14 then P:SendAreaTriggerMessage(Complet..veneno) D(15844) D(15826) D(15866) D(15842)
-	elseif caza and L==10 then P:SendAreaTriggerMessage(Complet..caz1) D(24136) D(24138)
-	elseif pala and L==12 then P:SendAreaTriggerMessage(Complet..Reden) D(6866) D(24157) D(24184)
-	elseif cham and L== 4 then P:SendAreaTriggerMessage(Complet..tier) D(6635)
-	elseif cham and L==10 then P:SendAreaTriggerMessage(Complet..fueg) D(6636) D(24336)
-	elseif cham and L==20 then P:SendAreaTriggerMessage(Complet..agua) D(6637) D(7767) D(7768) D(7766) D(23749) D(23871)
-	elseif cham and L==30 then if H then QUEST(14100) else QUEST(14111) P:SendAreaTriggerMessage(aire) end
-	elseif bruj and L==10 then P:SendAreaTriggerMessage(Complet..abis) 
-	elseif bruj and L==20 then P:SendAreaTriggerMessage(Complet..sucu) D(22243) D(6286)
-	elseif bruj and L==30 then P:SendAreaTriggerMessage(Complet..mana) D(22244)
-	elseif drui and L==10 then D(15710) D(15208)
-	end
-end
---------------------------------------------------------------------------------------------------------------------------------------------
-local function LogIn(E, P) -- Mensaje que el jugador ve al logear
-P:SendBroadcastMessage('Auto aprendizaje funcionando, entrena solo tus talentos.') local C,L = P:GetClassMask(),P:GetLevel()
-local guer,pala,pica,sace,cham,mago,bruj,drui = (C==1),(C==2),(C==8),(C==16),(C==64),(C==128),(C==256),(C==1024)
+-- Identificadores de clase - Utilizar el texto en lugar del método "P:GetClassMask()" para identificar las clases. --
+local CL = {[1]='GUE', [2]='PAL', [4]='CAZ', [8]='PIC', [16]='SAC', [32]='CAB', [64]='CHA', [128]='MAG', [256]='BRU', [1024]='DRU'}
 
-	if L==1 then if mago then P:LearnSpell(1459) elseif guer then P:LearnSpell(6673) elseif pala then P:LearnSpell(465)  
-		 elseif pica then P:LearnSpell(1784) elseif sace then P:LearnSpell(1243) elseif cham then P:LearnSpell(8017) 
-		 elseif bruj then P:LearnSpell(688)  elseif drui then P:LearnSpell(1126) 
-		 end 
+local c1 = '|cff00ff00' --> Color del texto en los anuncios.
+local s = {} --> La variable "s" contendrá todo lo que es string.
+	s.p0 		= c1..'Has completado la misión para: '
+	s.p1 		= c1..'Has completado la cadena de misiones para: ' 	
+	s.tierra 	= GetItemLink(5175,7)
+	s.fuego 	= GetItemLink(5176,7)
+	s.agua 		= GetItemLink(5177,7)
+	s.aire 		= GetItemLink(5178,7)
+	s.fulltotem = c1..'Recibes |r'..GetItemLink(46978,7)..c1..' por haber obtenido los cuatro tótems y haber completado todas las misiones.'
+	s.actdef 	= '\124cff71d5ff\124Hspell:71\124h[Actitud defensiva]\124h\124r'
+	s.actrab 	= '\124cff71d5ff\124Hspell:2458\124h[Actitud rabiosa]\124h\124r'
+	s.reden 	= '\124cff71d5ff\124Hspell:7328\124h[Redención]\124h\124r'
+	s.abis  	= '\124cff71d5ff\124Hspell:697\124h[Invocar abisario]\124h\124r'
+	s.sucu  	= '\124cff71d5ff\124Hspell:712\124h[Invocar súcubo]\124h\124r'
+	s.manaf  	= '\124cff71d5ff\124Hspell:691\124h[Invocar manáfago]\124h\124r'
+	s.oso  		= '\124cff71d5ff\124Hspell:5487\124h[Forma de oso]\124h\124r'
+	s.domes 	= '\124cff71d5ff\124Hspell:1515\124h[Domesticar bestia]\124h\124r'
+	s.enven  	= '\124cff71d5ff\124Hspell:8946\124h[Curar envenenamiento]\124h\124r'
+	s.p 		= c1..'.'
+
+	--++ Funciones para ahorrar espacio +++++++++++++++++++++++++++++++++++++++++++++++++--
+	local function L(pl,id) if not pl:HasSpell(id) then pl:LearnSpell(id) end end
+	local function Q(pl,q) pl:AddQuest(q) pl:CompleteQuest(q) pl:RewardQuest(q) end
+	local function Msg(pl,te) pl:SendAreaTriggerMessage(te) pl:SendBroadcastMessage(te) end
+	local function Lev(play,leve) play:SetLevel(leve) end
+	--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+
+	local function AutoSpell(PLA,lev,Cla) -- Doble bucle para enseñar habilidades ---------
+	-- Permite aprender habilidades incluso cuando hay saltos grandes de nivel.
+		for I=1,lev do 
+			for i=1,lev do 	ID=SPELL[Cla][I][i] 
+				if ID==nil then else 
+					if PLA:HasSpell(ID) then else PLA:LearnSpell(ID) end
+				end
+			end
+		end 
+	end------------------------------------------------------------------------------------
+
+local function SubeNivel(E,P,Old) --Función principal - Se activa al cambiar de nivel --------------------------------------------------------
+	if Script_ON==true then	--> Si el Script está activado entonces...
+		
+		AutoSpell(P, P:GetLevel(),  P:GetClassMask()) --> Aprender todas las habilidades hasta el nivel.
+		resta = (P:GetLevel() - Old)
+
+		if (resta == 1) then --Impide que la función principal "SubeNivel()" se ejecute más de una vez cuando se utiliza P:SetLevel()	
+			local l, cl, c, r, g, H = P:GetLevel(), P:GetClassMask(), CL[P:GetClassMask()], P:GetRaceMask(), P:GetGUIDLow(), P:IsHorde()
+			local Al = P:IsAlliance()
+
+			function Complet_Mision(a) -- Comprobar si el jugador ya ha completado las misiones	-----	
+				if P:GetQuestRewardStatus(a)==false then				
+					P:AddQuest(a) P:CompleteQuest(a) P:RewardQuest(a)				
+				end	
+			end--------------------------------------------------------------------------------------
+
+			-- Más funciones para ahorro de espacio -------------------------------------------------
+			local function D(ite,ca) if ca==nil then ca=1 end P:RemoveItem(ite,ca) end
+			local function A(IT,can) P:RemoveItem(IT,can) end
+			local function spellLearn(sPll) if P:HasSpell(sPll) then  else P:LearnSpell(sPll) end end
+			-----------------------------------------------------------------------------------------
+			local cl = P:GetClassMask()
+			-- Realizar misiones -------------------------------------------------------------------------------------------------------------
+			if c=='GUE' then 
+				if l==10 then for i=1,#Quest_10[cl][r] do Complet_Mision(Quest_10[cl][r][i]) end P:SetLevel(10) end
+				if l==30 then for i=1,#Quest_30[cl][r] do Complet_Mision(Quest_30[cl][r][i]) end P:SetLevel(30) end		
+			elseif c=='PAL' then
+				if l==12 then for i=1,#Quest_12[cl][r] do Complet_Mision(Quest_12[cl][r][i]) end P:SetLevel(12) D(6866) D(24157) D(24184) end
+				if l==64 then if AL then spellLearn(31801) end end
+				if l==66 then if H then spellLearn(53736) end end		
+			elseif c=='CAZ' then
+				if l==10 then for i=1,#Quest_10[cl][r] do Complet_Mision(Quest_10[cl][r][i]) end P:SetLevel(10) D(24136) D(24138) end		
+			elseif c=='CHA' then 
+				if l==4 then for b=1,#Quest_04[cl][r] do Complet_Mision(Quest_04[cl][r][b]) end P:SetLevel(4) D(6635,1) end
+				if l==10 then for b=1,#Quest_10[cl][r] do Complet_Mision(Quest_10[cl][r][b]) end P:SetLevel(10) D(6636) D(24336) end
+				if l==20 then for b=1,#Quest_20[cl][r] do Complet_Mision(Quest_20[cl][r][b]) end 
+					P:SetLevel(20) D(6637) D(7767) D(7768) D(7766) D(23749) D(23871) end
+				if l==30 then for b=1,#Quest_30[cl][r] do Complet_Mision(Quest_30[cl][r][b]) end P:SetLevel(30) 	
+					if H then Complet_Mision(14100) else Complet_Mision(14111) end P:SetLevel(30) D(22244) end
+				if l==70 then if H then spellLearn(2825) else spellLearn(32182) end end
+			elseif c=='MAG' then
+				if l==20 then for K=1,#Port20[r] do spellLearn(Port20[r][K]) end end
+				if l==40 then for K=1,#Port40[r] do spellLearn(Port40[r][K]) end end
+				if l==60 then if H then spellLearn(35715) else spellLearn(33690) end end
+				if l==65 then if H then spellLearn(35717) else spellLearn(33691) end end
+				if l==71 then spellLearn(53140) end
+				if l==74 then spellLearn(53142) end
+			elseif c=='BRU' then
+				if l==10 then for i=1,#Quest_10[cl][r] do Complet_Mision(Quest_10[cl][r][i]) end P:SetLevel(10) end
+				if l==20 then for i=1,#Quest_20[cl][r] do Complet_Mision(Quest_20[cl][r][i]) end P:SetLevel(20) D(22243) D(6286) end
+				if l==30 then for i=1,#Quest_30[cl][r] do Complet_Mision(Quest_30[cl][r][i]) end P:SetLevel(30) D(22244) end
+			elseif c=='DRU' then
+				if l==10 then for i=1,#Quest_10[cl][r] do Complet_Mision(Quest_10[cl][r][i]) end P:SetLevel(10) D(15710) D(15208) end
+				if l==14 then for i=1,#Quest_10[cl][l][r] do Complet_Mision(Quest_10[cl][l][r][i]) end 
+					P:SetLevel(14) D(15844) D(15826) D(15866) D(15842) end
+			end-------------------------------------------------------------------------------------------------------------------------------
+
+			-- Enviar mensajes al chat --
+			t=1000
+			if 	   c=='GUE' then
+				if l==10 then local function timed(Ev, del, rep, OB) Msg(OB, s.p1..s.actdef) end P:RegisterEvent(timed,t) end 
+				if l==30 then local function timed(Ev, del, rep, OB) Msg(OB, s.p1..s.actrab) end P:RegisterEvent(timed,t) end 
+			elseif c=='PAL' then 
+				if l==12 then local function timed(Ev, del, rep, OB) Msg(OB, s.p1..s.reden) end P:RegisterEvent(timed,t) end 
+			elseif c=='CAZ' then
+				if l==10 then local function timed(Ev, del, rep, OB) Msg(OB, s.p1..s.domes) end P:RegisterEvent(timed,t) end
+			elseif c=='CHA' then
+				if l== 4 then local function timed(Ev, del, rep, OB) Msg(OB, s.p1..s.tierra) end P:RegisterEvent(timed,t) end
+				if l==10 then local function timed(Ev, del, rep, OB) Msg(OB, s.p1..s.fuego) end P:RegisterEvent(timed,t) end
+				if l==20 then local function timed(Ev, del, rep, OB) Msg(OB, s.p1..s.agua) end P:RegisterEvent(timed,t) end
+				if l==30 then 
+					local function timed(Ev, del, rep, OB) Msg(OB, s.p1..s.aire) end
+					local function timed2(Ev, del, rep, OB) Msg(OB, s.fulltotem) end P:RegisterEvent(timed,t) P:RegisterEvent(timed2,2000) end				
+			elseif c=='BRU' then
+				if l==10 then local function timed(Ev, del, rep, OB) Msg(OB, s.p1..s.abis) end P:RegisterEvent(timed,t) end
+				if l==20 then local function timed(Ev, del, rep, OB) Msg(OB, s.p1..s.sucu) end P:RegisterEvent(timed,t) end
+				if l==30 then local function timed(Ev, del, rep, OB) Msg(OB, s.p1..s.manaf) end P:RegisterEvent(timed,t) end
+			elseif c=='DRU' then
+				if l==10 then local function timed(Ev, del, rep, OB) Msg(OB, s.p1..s.oso) end P:RegisterEvent(timed,t) end
+				if l==14 then local function timed(Ev, del, rep, OB) Msg(OB, s.p1..s.enven) end P:RegisterEvent(timed,t) end
+			end		
 		end
-end
-RegisterPlayerEvent(13,CambioDeNivel)
-RegisterPlayerEvent(3,LogIn)
+	end		
+end-------------------------------------------------------------------------------------------------------------------------------------------
+
+local function LogIn(E,P) --> Se activa cada vez que un jugador entra al mundo. ------------------------------------------------------
+	local c,l = CL[P:GetClassMask()], P:GetLevel()
+
+	if l==1 then -- Habilidades que están disponibles para aprender desde el nivel 1. 
+		if 	   c=='GUE' then L(P,6673)  	--> Grito de batalla
+		elseif c=='PAL' then L(P,465)		--> Aura de devoción
+		elseif c=='PIC' then L(P,1784)		--> Sigilo
+		elseif c=='SAC' then L(P,1243)		--> Palabra de poder: entereza
+		elseif c=='CHA' then L(P,8017)		--> Arma Muerdepiedras
+		elseif c=='MAG' then L(P,1459)		--> Intelecto Arcano
+		elseif c=='BRU' then L(P,688)		--> Invocar diablillo
+		elseif c=='DRU' then L(P,1126)		--> Marca de lo Salvaje
+		end 								-- El Cazador y el Caballero de la Muerte no tienen habilidades disponibles al nivel 1. 
+	end
+	if Script_ON==true then  
+		P:SendBroadcastMessage(c1..'Auto aprendizaje de hechizos funcionando, entrena solo tus talentos.')
+	end
+end-----------------------------------------------------------------------------------------------------------------------------------
+RegisterPlayerEvent(13, SubeNivel) 	 RegisterPlayerEvent(3, LogIn)
+
+--Dar el ítem "Tótem del Anillo de la Tierra" si el jugador lo elimina. --------------------------------------------------------------
+local function Al_Eliminar_Item(E, P, Item) 	local L, H = P:GetLevel(), P:IsHorde()
+	if P:GetClassMask()==64 then
+		if L>=30 and L<=54 then 
+			function dar_item(Id, D, Re, PL) 
+				PL:AddItem(46978)
+				Msg(PL, '|cffff0000No puedes eliminar este objeto, es requerido para colocar tótems. '
+				..'Podrás eliminarlo permanentemente al nivel 55.')
+			end  P:RegisterEvent(dar_item, 300)
+		end
+	end
+end-----------------------------------------------------------------------------------------------------------------------------------
+RegisterItemEvent(46978, 5, Al_Eliminar_Item)
