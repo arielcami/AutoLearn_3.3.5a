@@ -229,7 +229,7 @@ local function al_logear (e, P) ------------------------------------------------
             P:LearnSpell( Query:GetInt32(0) )  
         end
     end
-    if scriptShow then P:SendBroadcastMessage("Módulo |cff00ff00HechizosAutomáticos|r en ejecución.") end
+    if scriptOn and scriptShow then P:SendBroadcastMessage("Módulo |cff00ff00HechizosAutomáticos|r en ejecución.") end
 end ------------------------------------------------------------------------------------------------------------------------------------------
 
 local function elunaLoad(ev) -----> Se ejecuta cuando se inicia el servidor, o se le hace reload al ElunaEngine. --------------------------------
