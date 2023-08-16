@@ -1,18 +1,19 @@
 --[[
     Ariel Camilo - Agosto 2023
-    > Cómo Instalar: Ejecuta el siguiente comando por consola: .reload eluna, luego ejecuta los DOS archivos SQL en la base de datos world.
+
+    > Se requiere ejecutar los dos SQL en la base de datos World para que el Script funcione.
     > Para que se completen las misiones de clase, el jugador NO se debe saltar el nivel correspondiente.
         EJ: Las misiones del tótem de tierra son al nivel 4, 
-        si el jugador pasa del nivel 3 al 5, no se completarán las misiones, esto no pasa con las spells.
-    > Si se sube por ejemplo del nivel 1 al 80, se enseñan todas las habilidades de en medio.
+        si el jugador pasa del nivel 3 al 5, no se completarán las misiones.
+	Esto no ocurre con las Spells.
 ]]
 
 -- CONTROL
-local scriptOn      = true  --> Habilita o desactiva este Script de manera total.
-local scriptShow    = true  --> Muestra u oculta el anuncio del Script al logear.
-local teachRiding   = false --> Decide si se enseñará o no la habilidad de equitación. Paladines y Bujos aprenden las dos primeras por la monturas de clase.
-local doQuests      = true  --> Decide si completar misiones de clase como: Tótems, Redención, Domesticar Bestia y Forma de oso.
-                    --> Nota: Aunque doQuests sea false, igual se enseñarán las spells, pero no por medio de misiones.
+local SCRIPT_ON      = true  --> Habilita o desactiva este Script de manera total.
+local SCRIPT_SHOW    = true  --> Muestra u oculta el anuncio del Script al logear.
+local TEACH_RIDING   = false  --> Decide si se enseñará o no la habilidad de equitación. Paladines y Bujos con las dos primeras por la monturas de clase.
+local DO_QUESTS      = true  --> Decide si completar misiones de clase como: Tótems, Redención, Domesticar Bestia y Forma de oso.
+                    --> Nota: Aunque DO_QUESTS sea false, igual se enseñarán las spells, pero no por medio de misiones.
 
 local quests = { --> ID de misiones. Quise ponerlas en la DB, pero luego recordé que tienen que ejecutarse en orden.
     [4]={ --> Nivel 4
@@ -127,12 +128,17 @@ local s = {} --> La variable "s" contendrá todo lo que es string, también regi
 
 local function al_subirNivel (e, P, old) ---------------------------------------------------------------------------------------
 
-    local function learn (id_) if not P:HasSpell(id_) then P:LearnSpell(id_) end end --> Llamaremos esta función más abajo.
+    if SCRIPT_ON then        
 
-    if scriptOn then
+        local function learn (id_) --> Llamaremos esta función más abajo.
+            if not P:HasSpell(id_) then 
+                P:LearnSpell(id_) 
+            end 
+        end
+
         local C, L, A, R = P:GetClassMask(), P:GetLevel(), P:IsAlliance(), P:GetRaceMask()
 
-        if C==64 and not doQuests then   --> Tótems de Chamanes, se ejecuta solo si doQuests esta false.
+        if C==64 and not DO_QUESTS then   --> Tótems de Chamanes, se ejecuta solo si DO_QUESTS esta false.
             if L==4 or L==10 or L==20 or L==30 then
                 local totems = {[4]=5175, [10]=5176, [20]=5177, [30]=5178}
 
@@ -147,33 +153,33 @@ local function al_subirNivel (e, P, old) ---------------------------------------
             end        
         end        
         
-        local function getSkills(class, level) --> Función que llamaremos más adelante para retornar el id de una spell. -------
+        local function TEACH_SKILLS(class, level) --> Aquí recuperamos los valores de las IDs para luego aprenderlas.
 
-            local t_name = A and "aa_autolearn_a" or "aa_autolearn_h"   --> Hacemos un breve operador ternario.
-            local query = string.format("SELECT `skill` FROM `"..t_name.."` WHERE `class` = %d AND `level` <= %d", class, level)
+            if A then t_name="aa_autolearn_a" else t_name="aa_autolearn_h" end
+            local query = string.format("SELECT `skill` FROM `"..t_name.."` WHERE `level` <= %d AND `class` = %d", level, class) 
             local SQL = WorldDBQuery(query)
             local skills = {}   --> Declaramos nuestra tablita.
 
-            while SQL and SQL:NextRow() do 
-                table.insert(skills, SQL:GetInt32(0))   --> Llenamos momentáneamente nuestra tablita.
-            end 
-            return skills   --> Devuélveme eso perra!
-        end --------------------------------------------------------------------------------------------------------------------
+            if SQL then
+                table.insert(skills, SQL:GetInt32(0)) --> No sé por qué pero dentro del while no se inserta el primer valor. Así que lo hago antes.
+                while SQL:NextRow() do       
+                    table.insert(skills, SQL:GetInt32(0))
+                end
+                for ii=1, #skills do
+                    learn(skills[ii])
+                end
+            end            
+        end ---------------------------------------------------------------------------------------------------------------------------------------
         
-        for i = 1, L do                                 --> Iteramos con rango del 1 al nivel actual del jugador.
-            local skills_found = getSkills(C, i)        --> Hacemos la recuperación de las habilidades en la DB.
-            for _, skill in ipairs(skills_found) do     --> Iteramos sobre las skills encontradas.          
-                learn(skill)                            --> Enseñar skills
-            end
-        end
+        TEACH_SKILLS(C, L) --> Llamamos pa' enseñar skills.
 
-        if (L==20 or L==40 or L==60 or L==70 or L==77) and (teachRiding) then 
+        if (L==20 or L==40 or L==60 or L==70 or L==77) and (TEACH_RIDING) then 
             local riding = {33388, 33391, 34090, 34091, 54197}      --> 60%, 100%, 150%, 280% y vuelo en clima frío.
             local selection = {[20]=1,[40]=2,[60]=3,[70]=4,[77]=5}  --> Asociación de valores de L con índices de riding.
             learn(riding[ selection[L] ])                           --> Aprender el valor de montura correspondiente a L.
         end
         
-        if doQuests then       
+        if DO_QUESTS then       
             local level = P:GetLevel() --> Por seguridad, almacenamos otra vez el nivel actual antes de que empieze a recibir XP de las misiones.
             local questList = quests[L] and quests[L][C] and quests[L][C][R] --> Hacemos un short-circuit evaluation.
             local function D(it) P:RemoveItem(it, 1) end
@@ -183,7 +189,7 @@ local function al_subirNivel (e, P, old) ---------------------------------------
                     do_quest(P, quest)
                 end ----------------------------------------
 
-                P:SetLevel(level) --> Llevamos al jugador al nivel que tenía antes de realizarles las misiones. (Línea 177)
+                P:SetLevel(level) --> Llevamos al jugador al nivel que tenía antes de realizarles las misiones. (Línea 160)
 
                 --> Borramos todos los objetos residuales de todas las misiones de todas las clases que quedan en inventario.            
                 local deletes = {6866,24157,24184,24136,24138,6635,6636,24336,6637,7767,7768,7766,
@@ -223,13 +229,13 @@ local function al_logear (e, P) ------------------------------------------------
     
     local L, C, R = P:GetLevel(), P:GetClassMask(), P:GetRaceMask()
   
-    if scriptOn and P:GetLevel()==1 then --> Como solo se enseñan las habilidades al nivel 1 aquí, con la consulta a la DB Alianza basta.
-        local Query = WorldDBQuery("SELECT `skill` FROM `aa_autolearn_a` WHERE `class`= ".. P:GetClassMask().." AND `level` = "..P:GetLevel())
+    if SCRIPT_ON and P:GetLevel()==1 then --> Como solo se enseñan las habilidades al nivel 1 aquí, con la consulta a la DB Alianza basta.
+        local Query = WorldDBQuery("SELECT `skill` FROM `aa_autolearn_h` WHERE `class`= "..C.." AND `level` = "..L)
         if Query and not P:HasSpell( Query:GetInt32(0) ) then --> Solo enseñar si el jugador no tiene el hechizo.
             P:LearnSpell( Query:GetInt32(0) )  
         end
     end
-    if scriptOn and scriptShow then P:SendBroadcastMessage("Módulo |cff00ff00HechizosAutomáticos|r en ejecución.") end
+    if SCRIPT_ON and SCRIPT_SHOW then P:SendBroadcastMessage("Módulo |cff00ff00HechizosAutomáticos|r en ejecución.") end
 end ------------------------------------------------------------------------------------------------------------------------------------------
 
 local function elunaLoad(ev) -----> Se ejecuta cuando se inicia el servidor, o se le hace reload al ElunaEngine. --------------------------------
