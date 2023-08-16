@@ -189,7 +189,7 @@ local function al_subirNivel (e, P, old) ---------------------------------------
                     do_quest(P, quest)
                 end ----------------------------------------
 
-                P:SetLevel(level) --> Llevamos al jugador al nivel que tenía antes de realizarles las misiones. (Línea 160)
+                P:SetLevel(level) --> Llevamos al jugador al nivel que tenía antes de realizarles las misiones. (Línea 182)
 
                 --> Borramos todos los objetos residuales de todas las misiones de todas las clases que quedan en inventario.            
                 local deletes = {6866,24157,24184,24136,24138,6635,6636,24336,6637,7767,7768,7766,
