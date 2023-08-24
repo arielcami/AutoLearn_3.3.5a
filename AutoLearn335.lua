@@ -155,7 +155,7 @@ local function al_subirNivel (e, P, old) ---------------------------------------
         
         local function TEACH_SKILLS(class, level) --> Aquí recuperamos los valores de las IDs para luego aprenderlas.
 
-            if A then t_name="aa_autolearn_a" else t_name="aa_autolearn_h" end
+	    local t_name = A and "aa_autolearn_a" or "aa_autolearn_h" --> Me gusta más el short-circuit operator.
             local query = string.format("SELECT `skill` FROM `"..t_name.."` WHERE `level` <= %d AND `class` = %d", level, class) 
             local SQL = WorldDBQuery(query)
             local skills = {}   --> Declaramos nuestra tablita.
@@ -165,8 +165,8 @@ local function al_subirNivel (e, P, old) ---------------------------------------
                 while SQL:NextRow() do       
                     table.insert(skills, SQL:GetInt32(0))
                 end
-                for ii=1, #skills do
-                    learn(skills[ii])
+                for sp_id = 1, #skills do
+                    learn( skills[sp_id] )
                 end
             end            
         end ---------------------------------------------------------------------------------------------------------------------------------------
@@ -176,7 +176,7 @@ local function al_subirNivel (e, P, old) ---------------------------------------
         if (L==20 or L==40 or L==60 or L==70 or L==77) and (TEACH_RIDING) then 
             local riding = {33388, 33391, 34090, 34091, 54197}      --> 60%, 100%, 150%, 280% y vuelo en clima frío.
             local selection = {[20]=1,[40]=2,[60]=3,[70]=4,[77]=5}  --> Asociación de valores de L con índices de riding.
-            learn(riding[ selection[L] ])                           --> Aprender el valor de montura correspondiente a L.
+            learn( riding[selection[L]] )                           --> Aprender el valor de montura correspondiente a L.
         end
         
         if DO_QUESTS then       
@@ -189,7 +189,7 @@ local function al_subirNivel (e, P, old) ---------------------------------------
                     do_quest(P, quest)
                 end ----------------------------------------
 
-                P:SetLevel(level) --> Llevamos al jugador al nivel que tenía antes de realizarles las misiones. (Línea 182)
+                P:SetLevel(level) --> Llevamos al jugador al nivel que tenía antes de realizarles las misiones. (Línea 183)
 
                 --> Borramos todos los objetos residuales de todas las misiones de todas las clases que quedan en inventario.            
                 local deletes = {6866,24157,24184,24136,24138,6635,6636,24336,6637,7767,7768,7766,
