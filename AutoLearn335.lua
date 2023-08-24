@@ -1,7 +1,7 @@
 --[[
     Ariel Camilo - Agosto 2023
 
-    > Se requiere ejecutar los dos SQL en la base de datos World para que el Script funcione.
+    > Asegúrate de ejecutar el archivo SQL del script en la base de datos WORLD, contiene todas las spells que se enseñarán.
     > Para que se completen las misiones de clase, el jugador NO se debe saltar el nivel correspondiente.
         EJ: Las misiones del tótem de tierra son al nivel 4, 
         si el jugador pasa del nivel 3 al 5, no se completarán las misiones.
